@@ -1,3 +1,4 @@
+from auth import check_login, failed_attempts, password_changing
 
 from storage import load_data, save_data
 from datetime import datetime, timedelta
@@ -30,21 +31,35 @@ def main_menu_loop(data, username):
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
-            print("Account information - coming soon")
+            user_info = data['users'][username]
+            print("\n--- ACCOUNT INFORMATION ---")
+            for key, value in user_info.items():
+                print(f"{key}: {value}")
+            print("---------------------------")
+            input("Press Enter to continue...")
         elif choice == "2":
-            print("Check balance - coming soon")
+            information=balance(data,username)
         elif choice == "3":
-            print("Deposit - coming soon")
+            deposit_money=deposit()
         elif choice == "4":
-            print("Withdraw - coming soon")
+            withdraw_money=withdraw()
         elif choice == "5":
-            print("Transfer - coming soon")
+            transfer_money=transfer()
         elif choice == "6":
-            print("Transaction history - coming soon")
+            transaction_money=transaction()
         elif choice == "7":
-            print("Daily limits - coming soon")
+            daily_limits_money=daily_limits()
         elif choice == "8":
-            print("Change password - coming soon")
+            
+            while True:
+                res=password_changing(data,username)
+                if res=='True':
+                    print("Password successfully changed!")
+                    break
+                else:
+                    
+                    continue
+
         elif choice == "9":
             print("You have been logged out.")
             return True
@@ -68,11 +83,12 @@ def main():
             now=datetime.now()
             acces=check_login(now,data, username, password)
             
-            if acces==True:
+            if acces=='True':
                 main_menu_loop(data, username)
-            elif access==2:
+            elif acces=='2':
                 print('Wrong username or password')
-            else:
+
+            elif acces=='False':
                 if failed_attempts(now,data, username)==True:
                     main()
                 elif failed_attempts(now,data, username)==False:
@@ -82,14 +98,36 @@ def main():
                     main()
                     
         elif choice == "2":
-            new_user=input("Username: ").strip()
-            new_password=input("Password: ").strip()
-            k=len(data['users'])
-            data_user='user0'+str(k+1)
-            data["users"][data_user] = {
+            new_user = input("Username: ").strip()
+            
+            if new_user in data['users']:
+                print("Username already exists! Please choose another one.")
+                continue
+                
+            new_password = input("Password: ").strip()
+            
+ 
+            if len(new_password) < 8:
+                print("Password must be at least 8 characters long.")
+                continue
+            if not any(c.isupper() for c in new_password):
+                print("Password must contain at least one uppercase letter.")
+                continue
+            if not any(c.islower() for c in new_password):
+                print("Password must contain at least one lowercase letter.")
+                continue
+            if not any(c.isdigit() for c in new_password):
+                print("Password must contain at least one digit.")
+                continue
+
+            k = len(data['users'])
+            
+
+            
+            data["users"][new_user] = {
                 "name": new_user,
                 "password": new_password,
-                "account_number": "1001000"+str(k+1),
+                "account_number": "1001000" + str(k + 1),
                 "balance": 0.0,
                 "card_status": "active",
                 "failed_attempts": 0,
@@ -102,12 +140,9 @@ def main():
                 "history": [],
                 "last_transaction": None
             }
-
-        elif choice == "0":
-            print("Goodbye!")
-            break
-        else:
-            print("Invalid choice. Please enter a number from the menu.")
+            
+            save_data(data)
+            print("Sign up successful! You can now log in.")
 
 if __name__ == "__main__":
     main()
